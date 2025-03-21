@@ -4,6 +4,7 @@ This Pine Script strategy for TradingView automates dynamic position sizing base
 The script also includes visual SL/TP plotting and an interactive SL adjustment feature.
 
 Features:
+
 ✔️ Dynamic position sizing based on risk percentage
 
 ✔️ ATR-based or manual stop-loss calculation
