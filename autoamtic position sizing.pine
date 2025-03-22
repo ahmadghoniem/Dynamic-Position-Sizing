@@ -20,7 +20,7 @@ color col = input.color(color.white, title="Text Color")
 posscrX = input(30, "Position Size Label x-axis")
 
 // ATR-based Stop Loss
-atr_value = ta.atr(14)
+atr_value = ta.atr(14) * atr_multiplier
 sl_percent = math.round(math.max((atr_value / close) * 100, min_sl_percent),3)
 
 // Risk per trade calculation
