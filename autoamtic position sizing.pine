@@ -5,66 +5,79 @@ strategy("Dynamic Position Sizing & RR", overlay=true)
 account_balance = input.float(100, "Account Balance ($)", step=0.1)
 risk_percent = input(5, "Risk per Trade (%)")
 rr_ratio = input.float(2.0, "Risk-Reward Ratio", step=0.1)
-min_sl_percent = input(0.5, "Minimum SL (%)")
+manual_sl_percent = input.float(0.5, "SL Percentage (%)",step=0.01)
 atr_multiplier = input.float(1.0, "ATR Multiplier for SL", step=0.1)
 
-sl_line = input.price(50, "Pair Current Price", confirm=true)
-sl_distance_percent = math.abs(((close - sl_line) / close)) * 100  // Calculates SL percentage by the line relative to candle close price
+input_sl_percent = math.abs(manual_sl_percent)  
 
 // Added checkboxes for enabling/disabling SL for long and short positions
 use_long_sl = input.bool(true, "Use Long SL", group="Style")
 use_short_sl = input.bool(true, "Use Short SL", group="Style")
 
 showscr = input(true, "Show Position Size Label")
-color col = input.color(color.white, title="Text Color")
 posscrX = input(30, "Position Size Label x-axis")
 
 // ATR-based Stop Loss
 atr_value = ta.atr(14) * atr_multiplier
-sl_percent = math.round(math.max((atr_value / close) * 100, min_sl_percent),3)
+sl_percent = math.round( ((atr_value / close) * 100) ,3)
 
 // Risk per trade calculation
 risk_amount = (account_balance * risk_percent) / 100
 position_size = math.round((risk_amount / (sl_percent / 100)))
-position_size_line = math.round((risk_amount / (sl_distance_percent / 100))) 
+position_size_line = math.round((risk_amount / (input_sl_percent / 100))) 
 
-//  SL Levels
+// Potential Profit / Loss per trade calculation
+potential_profit = math.round(risk_amount * rr_ratio, 2)
+potential_loss = math.round(risk_amount, 2)
+
+
+// Entry, SL, and TP Levels
+long_entry = ta.crossover(ta.sma(close, 14), ta.sma(close, 50))
+short_entry = ta.crossunder(ta.sma(close, 14), ta.sma(close, 50))
 sl_level_long = close * (1 - sl_percent / 100)
+tp_level_long = close + ((close - sl_level_long) * rr_ratio)
 sl_level_short = close * (1 + sl_percent / 100)
+tp_level_short = close - ((sl_level_short - close) * rr_ratio)
 
 
-// Plot SL levels - modified to show only when enabled
+// Plot SL & TP levels - modified to show only when enabled
 plot(use_long_sl ? sl_level_long : na, title="Long SL", color=color.red, linewidth=2)
 plot(use_short_sl ? sl_level_short : na, title="Short SL", color=color.red, linewidth=2)
 
-f_color (_val ) => 
-     _val  ? #00000000 : na
 
-f_print (_txt ) => 
-     var _lbl  = label(na), 
-     label.delete(_lbl ), 
-     _lbl  := label.new(
-     time + (time-time[1])*posscrX , 
-     ohlc4[1], 
-     _txt ,
-     xloc.bar_time, 
-     yloc.price, 
-     f_color (  showscr ),
-     textcolor =  showscr ? col : na, 
-     style=label.style_label_left,
-     size=size.normal,
-     textalign = text.align_left  // Ensures text is aligned to the left
-     )
 
-f_print ( 
-     " Account Balance:       "           + str.tostring(account_balance) + 
-     "\n Risk Per Trade:           "      + str.tostring(risk_percent) + "%" + " ($" + str.tostring(math.round(risk_amount, 2)) +  ")" + 
-     "\n SL Percentage:           "       + str.tostring(math.round(sl_distance_percent, 3)) + "%" +
-     "\n Position Size:             "     + str.tostring(position_size_line) +
-     "\n Potential Profit:        "      + "✅ +$" + str.tostring(math.round(risk_amount * rr_ratio, 2)) +
-     "\n Potential Loss:          "      + "❌ -$" + str.tostring(math.round(risk_amount, 2)) +
-     "\n R/R:                          "  + str.tostring(rr_ratio,"#.##") + " R" +
-     "\n\n📌 INSTRUCTIONS: Update Account Balance & Drag the SL line below the last candle close to set the script-determined stop-loss." +
-     "\nℹ️ HOW IT WORKS: The script calculates SL from the last candle close (top if bullish, bottom if bearish) to the SL line." +
-     (position_size_line > account_balance ? "\n⚠️ Needs a leverage of at least " + str.tostring(math.round(position_size_line / account_balance, 2)) + "x" : "")
-     )
+// Create a table
+var table tradeTable = table.new(position = position.top_right, columns = 2, rows = 8, bgcolor=color.black)
+
+// Define background colors
+color row_bg_color_1 = color.rgb(30, 30, 30)  // Dark Gray
+color row_bg_color_2 = color.rgb(45, 45, 45)  // Slightly Lighter Gray
+
+string leverage_needed = position_size_line > account_balance ? "⚠️ Minimum " + str.tostring(math.round(position_size_line / account_balance, 2)) + "X" : "All set!"
+
+
+// Populate table values
+if bar_index == bar_index
+    table.cell(tradeTable, 0, 0, "Account Balance", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
+    table.cell(tradeTable, 1, 0, "$" + str.tostring(account_balance, "#.00"), text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
+
+    table.cell(tradeTable, 0, 1, "Risk Per Trade", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
+    table.cell(tradeTable, 1, 1, str.tostring(risk_percent, "#.00") + "% ($" + str.tostring(risk_amount, "#.00") + ")", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
+
+    table.cell(tradeTable, 0, 2, "SL Percentage", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
+    table.cell(tradeTable, 1, 2, str.tostring(input_sl_percent, "0.00") + "%", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
+
+    table.cell(tradeTable, 0, 3, "Position Size", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
+    table.cell(tradeTable, 1, 3, str.tostring(position_size_line, "#.00"), text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
+
+    table.cell(tradeTable, 0, 4, "Risk/Reward", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
+    table.cell(tradeTable, 1, 4, str.tostring(rr_ratio, "#.##") + " R", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
+
+    table.cell(tradeTable, 0, 5, "Potential Profit", text_color=color.green, text_halign=text.align_left, bgcolor=row_bg_color_1)
+    table.cell(tradeTable, 1, 5, "✅ +$" + str.tostring(potential_profit, "#.00"), text_color=color.green, text_halign=text.align_left, bgcolor=row_bg_color_1)
+
+    table.cell(tradeTable, 0, 6, "Potential Loss", text_color=color.red, text_halign=text.align_left, bgcolor=row_bg_color_2)
+    table.cell(tradeTable, 1, 6, "❌ -$" + str.tostring(potential_loss, "#.00"), text_color=color.red, text_halign=text.align_left, bgcolor=row_bg_color_2)
+
+    table.cell(tradeTable, 0, 7, "Leverage Needed?", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
+    table.cell(tradeTable, 1, 7, str.tostring(leverage_needed), text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
