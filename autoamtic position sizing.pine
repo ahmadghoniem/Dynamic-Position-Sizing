@@ -1,5 +1,5 @@
 //@version=5
-strategy("Dynamic Position Sizing & RR", overlay=true)
+indicator("Dynamic Position Sizing & RR", overlay=true)
 
 // Input settings
 account_balance = input.float(100, "Account Balance ($)", step=0.1)
