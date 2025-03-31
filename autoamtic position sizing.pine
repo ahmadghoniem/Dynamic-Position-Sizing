@@ -7,8 +7,8 @@ risk_percent = input(5, "Risk per Trade (%)")
 rr_ratio = input.float(2.0, "Risk-Reward Ratio", step=0.1)
 manual_sl_percent = input.float(0.5, "SL Percentage (%)",step=0.01)
 atr_multiplier = input.float(1.0, "ATR Multiplier for SL", step=0.1)
-
 input_sl_percent = math.abs(manual_sl_percent)  
+maker_fee = 0.05/100
 
 // Added checkboxes for enabling/disabling SL for long and short positions
 use_long_sl = input.bool(true, "Use Long SL", group="Style")
@@ -27,8 +27,8 @@ position_size = math.round((risk_amount / (sl_percent / 100)))
 position_size_line = math.round((risk_amount / (input_sl_percent / 100))) 
 
 // Potential Profit / Loss per trade calculation
-potential_profit = math.round(risk_amount * rr_ratio, 2)
-potential_loss = math.round(risk_amount, 2)
+potential_profit = math.round(risk_amount * rr_ratio, 2) - position_size * maker_fee
+potential_loss = math.round(risk_amount, 2) + position_size * maker_fee
 
 
 // Entry, SL, and TP Levels
