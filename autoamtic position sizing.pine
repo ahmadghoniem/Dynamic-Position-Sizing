@@ -47,37 +47,40 @@ plot(use_short_sl ? sl_level_short : na, title="Short SL", color=color.red, line
 
 
 // Create a table
-var table tradeTable = table.new(position = position.top_right, columns = 2, rows = 8, bgcolor=color.black)
+
+string leverage_needed = position_size_line > account_balance ? "⚠️ Minimum " + str.tostring(math.round(position_size_line / account_balance, 2)) + "X" : ""
+
+rows_levg = position_size_line > account_balance ? 8 : 7 
+
+var table tradeTable = table.new(position = position.top_right, columns = 2, rows = rows_levg, bgcolor = color.black)
 
 // Define background colors
 color row_bg_color_1 = color.rgb(30, 30, 30)  // Dark Gray
 color row_bg_color_2 = color.rgb(45, 45, 45)  // Slightly Lighter Gray
 
-string leverage_needed = position_size_line > account_balance ? "⚠️ Minimum " + str.tostring(math.round(position_size_line / account_balance, 2)) + "X" : "All set!"
-
-
 // Populate table values
-if bar_index == bar_index
-    table.cell(tradeTable, 0, 0, "Account Balance", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
-    table.cell(tradeTable, 1, 0, "$" + str.tostring(account_balance, "#.00"), text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
+if bar_index == bar_index  // Re-renders every bar
+    table.cell(tradeTable, 0, 0, "Account Balance", text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_1)
+    table.cell(tradeTable, 1, 0, "$" + str.tostring(account_balance, "#.00"), text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_1)
 
-    table.cell(tradeTable, 0, 1, "Risk Per Trade", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
-    table.cell(tradeTable, 1, 1, str.tostring(risk_percent, "#.00") + "% ($" + str.tostring(risk_amount, "#.00") + ")", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
+    table.cell(tradeTable, 0, 1, "Risk Per Trade", text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_2)
+    table.cell(tradeTable, 1, 1, str.tostring(risk_percent, "#.00") + "% ($" + str.tostring(risk_amount, "#.00") + ")", text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_2)
 
-    table.cell(tradeTable, 0, 2, "SL Percentage", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
-    table.cell(tradeTable, 1, 2, str.tostring(input_sl_percent, "0.00") + "%", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
+    table.cell(tradeTable, 0, 2, "SL Percentage", text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_1)
+    table.cell(tradeTable, 1, 2, str.tostring(input_sl_percent, "0.00") + "%", text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_1)
 
-    table.cell(tradeTable, 0, 3, "Position Size", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
-    table.cell(tradeTable, 1, 3, str.tostring(position_size_line, "#.00"), text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
+    table.cell(tradeTable, 0, 3, "Position Size", text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_2)
+    table.cell(tradeTable, 1, 3, str.tostring(position_size_line, "#.00"), text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_2)
 
-    table.cell(tradeTable, 0, 4, "Risk/Reward", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
-    table.cell(tradeTable, 1, 4, str.tostring(rr_ratio, "#.##") + " R", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_1)
+    table.cell(tradeTable, 0, 4, "Risk/Reward", text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_1)
+    table.cell(tradeTable, 1, 4, str.tostring(rr_ratio, "#.##") + " R", text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_1)
 
-    table.cell(tradeTable, 0, 5, "Potential Profit", text_color=color.green, text_halign=text.align_left, bgcolor=row_bg_color_1)
-    table.cell(tradeTable, 1, 5, "✅ +$" + str.tostring(potential_profit, "#.00"), text_color=color.green, text_halign=text.align_left, bgcolor=row_bg_color_1)
+    table.cell(tradeTable, 0, 5, "Potential Profit", text_color = color.green, text_halign = text.align_left, bgcolor = row_bg_color_1)
+    table.cell(tradeTable, 1, 5, "✅ +$" + str.tostring(potential_profit, "#.00"), text_color = color.green, text_halign = text.align_left, bgcolor = row_bg_color_1)
 
-    table.cell(tradeTable, 0, 6, "Potential Loss", text_color=color.red, text_halign=text.align_left, bgcolor=row_bg_color_2)
-    table.cell(tradeTable, 1, 6, "❌ -$" + str.tostring(potential_loss, "#.00"), text_color=color.red, text_halign=text.align_left, bgcolor=row_bg_color_2)
+    table.cell(tradeTable, 0, 6, "Potential Loss", text_color = color.red, text_halign = text.align_left, bgcolor = row_bg_color_2)
+    table.cell(tradeTable, 1, 6, "❌ -$" + str.tostring(potential_loss, "#.00"), text_color = color.red, text_halign = text.align_left, bgcolor = row_bg_color_2)
 
-    table.cell(tradeTable, 0, 7, "Leverage Needed?", text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
-    table.cell(tradeTable, 1, 7, str.tostring(leverage_needed), text_color=color.white, text_halign=text.align_left, bgcolor=row_bg_color_2)
+    if position_size_line > account_balance
+        table.cell(tradeTable, 0, 7, "Leverage", text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_2)
+        table.cell(tradeTable, 1, 7, leverage_needed, text_color = color.white, text_halign = text.align_left, bgcolor = row_bg_color_2)
